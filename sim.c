@@ -391,12 +391,11 @@ int main(int argc, char* argv[])
         if (FD_ISSET(server_fd, &read_fds)) {
             // New connection
             client_fd = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
-            if (client_fd < 0) {
-                perror("Accept failed");
+            if (client_fd >= 0) {
+                printf("New connection accepted\n");
             }
-            printf("New connection accepted\n");
-            if (client_fd > 0) {
-                close(client_fd); // Close previous client socket
+            else if (client_fd < 0) {
+                perror("Accept failed");
             }
         }
 
