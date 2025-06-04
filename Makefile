@@ -14,7 +14,10 @@ EXEPATH = ./
 
 CC        = gcc
 WARNINGS  = -Wall -Wextra -pedantic
-CFLAGS    = $(WARNINGS)
+CFLAGS   ?= $(WARNINGS)
+ifeq ($(DEBUG),1)
+CFLAGS   += -g -DDEBUG
+endif
 LFLAGS    = $(WARNINGS)
 
 TARGET    = $(EXENAME)$(EXE)
@@ -28,7 +31,7 @@ clean:
 	rm -f $(DELETEFILES)
 
 $(TARGET): $(MUSASHIGENHFILES) $(.OFILES) Makefile
-	$(CC) -o $(TARGET) $(.OFILES) $(LFLAGS) -lm
+	$(CC) -o $(TARGET) $(.OFILES) $(CFLAGS) $(LFLAGS) -lm
 
 $(MUSASHIGENCFILES) $(MUSASHIGENHFILES): $(MUSASHIGENERATOR)$(EXE)
 	$(EXEPATH)$(MUSASHIGENERATOR)$(EXE)
