@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
 #include "sim.h"
@@ -353,18 +354,21 @@ int main(int argc, char* argv[])
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     fcntl(server_fd, F_SETFL, O_NONBLOCK); // Set non-blocking mode
     if (server_fd < 0) {
-        exit_error("Failed to create socket");
+        perror("Failed to create socket");
+        exit(EXIT_FAILURE);
     }
     int bind_result = bind(server_fd, (struct sockaddr *)&address, sizeof(address));
     if (bind_result < 0) {
+        perror("Failed to bind socket");
         close(server_fd);
-        exit_error("Failed to bind socket");
+        exit(EXIT_FAILURE);
+    }
+    if (listen(server_fd, 3) < 0) {
+        perror("Failed to listen on socket");
+        close(server_fd);
+        exit(EXIT_FAILURE);
     }
     printf("Server listening on port %d\n", PORT);
-    if (listen(server_fd, 3) < 0) {
-        close(server_fd);
-        exit_error("Failed to listen on socket");
-    }
 
     // Main loop
     g_quit = 0;
