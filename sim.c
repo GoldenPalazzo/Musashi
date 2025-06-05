@@ -451,12 +451,17 @@ int main(int argc, char* argv[])
             buffer[bytes_read] = '\0'; // Null-terminate the string
             printf("Received command: %s\n", buffer);
         }
-        if (strcmp(buffer, "quit") == 0) {
+        char msg[BUF_SIZE];
+        if (strcasecmp(buffer, "quit") == 0) {
             g_quit = 1;
+            snprintf(msg, sizeof(msg), "quit");
+            send(client_fd, msg, strlen(msg), 0);
             break;
-        } else if (strcmp(buffer, "nmi") == 0) {
+        } else if (strcasecmp(buffer, "nmi") == 0) {
             g_nmi = 1; // Trigger NMI
-        } else if (strcmp(buffer, "step") == 0){
+            nmi_device_update();
+            snprintf(msg, sizeof(msg), "nmi");
+        } else if (strcasecmp(buffer, "step") == 0){
 #ifdef DEBUG
             printf("Executing %u cycles...\n", n_cycles);
 #endif
@@ -469,13 +474,56 @@ int main(int argc, char* argv[])
 
             // Check for user input or other events
             // get_user_input();
-        } else if (strcmp(buffer, "\0") == 0) {
+            unsigned int cycles_executed = m68k_cycles_run();
+            snprintf(msg, sizeof(msg), "%u", cycles_executed);
+        } else if (strncasecmp(buffer, "rreg ", 5) == 0) {
+            // Read register
+            char reg_name[10];
+            sscanf(buffer + 5, "%s", reg_name);
+            m68k_register_t reg = m68k_register_from_string(reg_name);
+            if (reg == 1337) {
+                printf("Unknown register: %s\n", reg_name);
+                snprintf(msg, sizeof(msg), "wrongreg");
+            } else {
+                unsigned int reg_value = m68k_get_reg(NULL, reg);
+                char msg[BUF_SIZE];
+                snprintf(msg, sizeof(msg), "%08x", reg_value);
+            }
+        } else if (strncasecmp(buffer, "wreg ", 5) == 0) {
+            // Write register
+            char reg_name[10];
+            unsigned int value;
+            sscanf(buffer + 5, "%s %x", reg_name, &value);
+            m68k_register_t reg = m68k_register_from_string(reg_name);
+            if (reg == 1337) {
+                snprintf(msg, sizeof(msg), "wrongreg");
+            } else {
+                m68k_set_reg(reg, value);
+                int val = m68k_get_reg(NULL, reg);
+                snprintf(msg, sizeof(msg), "%08x", val);
+            }
+        } else if (strcasecmp(buffer, "state") == 0) {
+            unsigned int pc = m68k_get_reg(NULL, M68K_REG_PC);
+            unsigned int sp = m68k_get_reg(NULL, M68K_REG_A7);
+            unsigned int sr = m68k_get_reg(NULL, M68K_REG_SR);
+            char msg[BUF_SIZE];
+            snprintf(msg, sizeof(msg), "%08x %08x %04x", pc, sp, sr);
+        } else if (strcasecmp(buffer, "reset") == 0) {
+            cpu_pulse_reset();
+            nmi_device_reset();
+            m68k_pulse_reset();
+            snprintf(msg, sizeof(msg), "reset");
+        }
+
+
+        else if (strcmp(buffer, "\0") == 0) {
             continue;
         }
         else {
             printf("Unknown command: %s\n", buffer);
+            snprintf(msg, sizeof(msg), "unknown");
         }
-
+        send(client_fd, msg, strlen(msg), 0);
     }
     return 0;
 }
