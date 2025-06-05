@@ -235,6 +235,34 @@ void int_controller_clear(unsigned int value)
     m68k_set_irq(g_irq_highest_level);
 }
 
+
+/* Convert register name to M68K register enum */
+m68k_register_t m68k_register_from_string(const char* reg_name)
+{
+    if (strcmp(reg_name, "D0") == 0) return M68K_REG_D0;
+    if (strcmp(reg_name, "D1") == 0) return M68K_REG_D1;
+    if (strcmp(reg_name, "D2") == 0) return M68K_REG_D2;
+    if (strcmp(reg_name, "D3") == 0) return M68K_REG_D3;
+    if (strcmp(reg_name, "D4") == 0) return M68K_REG_D4;
+    if (strcmp(reg_name, "D5") == 0) return M68K_REG_D5;
+    if (strcmp(reg_name, "D6") == 0) return M68K_REG_D6;
+    if (strcmp(reg_name, "D7") == 0) return M68K_REG_D7;
+    if (strcmp(reg_name, "A0") == 0) return M68K_REG_A0;
+    if (strcmp(reg_name, "A1") == 0) return M68K_REG_A1;
+    if (strcmp(reg_name, "A2") == 0) return M68K_REG_A2;
+    if (strcmp(reg_name, "A3") == 0) return M68K_REG_A3;
+    if (strcmp(reg_name, "A4") == 0) return M68K_REG_A4;
+    if (strcmp(reg_name, "A5") == 0) return M68K_REG_A5;
+    if (strcmp(reg_name, "A6") == 0) return M68K_REG_A6;
+    if (strcmp(reg_name, "A7") == 0) return M68K_REG_A7;
+    if (strcmp(reg_name, "PC") == 0) return M68K_REG_PC;
+    if (strcmp(reg_name, "USP") == 0) return M68K_REG_USP;
+    if (strcmp(reg_name, "ISP") == 0) return M68K_REG_ISP;
+    if (strcmp(reg_name, "MSP") == 0) return M68K_REG_MSP;
+    if (strcmp(reg_name, "SR") == 0) return M68K_REG_SR;
+    return 1337; // Unknown register
+}
+
 /* Parsing S-Rec binary format */
 void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
 {
