@@ -10,8 +10,8 @@ void cpu_write_long(unsigned int address, unsigned int value);
 void cpu_pulse_reset(void);
 void cpu_set_fc(unsigned int fc);
 int  cpu_irq_ack(int level);
-void cpu_instr_callback(int pc);
-void your_pc_changed_handler_function(unsigned int pc);
-void your_instruction_hook_function(unsigned int pc);
+void cpu_instr_callback(unsigned int pc);
+void cpu_pc_changed(unsigned int pc);
 
+void parse_srec(const char *filename, unsigned char *ram, unsigned int ram_size);
 #endif /* SIM__HEADER */
