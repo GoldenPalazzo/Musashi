@@ -1,6 +1,6 @@
 EXENAME          = g68k
 
-MAINFILES        = sim.c
+MAINFILES        = g68k.c simulator.c server.c
 MUSASHIFILES     = m68kcpu.c m68kdasm.c softfloat/softfloat.c
 MUSASHIGENCFILES = m68kops.c
 MUSASHIGENHFILES = m68kops.h
