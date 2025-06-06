@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "m68k.h"
 #include "simulator.h"
@@ -39,7 +40,6 @@ int main(int argc, char *argv[])
                     break;
                 case G68K_RREG:
                     // Handle read register request
-                    // For now, we will just print the PC value
                     {
                         char reg_name[10] = {0};
                         sscanf(args, "%9s", reg_name);
@@ -48,19 +48,15 @@ int main(int argc, char *argv[])
                         {
                             unsigned int value = m68k_get_reg(NULL, reg);
                             snprintf(msg, sizeof(msg), "%08x", value);
-                            printf("%s\n", msg);
                         }
                         else
                         {
                             snprintf(msg, sizeof(msg), "wrongreg");
-                            printf("%s\n", msg);
                         }
                     }
                     break;
                 case G68K_WREG:
                     // Handle write register request
-                    // This is a placeholder, actual implementation needed
-                    printf("Write register request received\n");
                     break;
                 case G68K_STATE:
                     // Handle state request
