@@ -77,6 +77,10 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
 void cpu_instr_callback(unsigned int pc);
 void cpu_pc_changed(unsigned int pc);
 int m68k_register_from_string(const char* reg_name);
+
+// External functions
+void g68k_setup(const char* srec_filename);
+void g68k_execute_cycles(unsigned int cycles);
 // =============================================================
 // Definitions
 
@@ -272,7 +276,6 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
             address_str[address_bytes * 2] = '\0'; // Null-terminate the string
             address = (unsigned int)strtol(address_str, NULL, 16); // Convert address from hex to int
             free(address_str);
-
 #ifdef DEBUG
             printf("Address: %04lx\n", address);
 #endif
@@ -354,5 +357,43 @@ int m68k_register_from_string(const char* reg_name)
     if (strcmp(reg_name, "MSP") == 0) return M68K_REG_MSP;
     if (strcmp(reg_name, "SR") == 0) return M68K_REG_SR;
     return 1337; // Unknown register
+}
+
+// Setup function for the simulator
+void g68k_setup(const char* srec_filename)
+{
+    if (srec_filename == NULL || strlen(srec_filename) == 0)
+    {
+        fprintf(stderr, "S-Record filename cannot be empty\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Initialize RAM
+    memset(g_ram, 0, RAM_SIZE);
+
+    // Parse S-Record file and load it into RAM
+    parse_srec(srec_filename, g_ram, RAM_SIZE);
+
+    m68k_init();
+    m68k_set_cpu_type(M68K_CPU_TYPE_68000);
+    m68k_pulse_reset(); // Pulse reset to initialize the CPU
+    nmi_device_reset(); // Reset NMI device
+    g_nmi = 0; // Clear NMI flag
+    g_irq_highest_level = 0; // Clear highest IRQ level
+    g_irq_pending = 0; // Clear pending IRQs
+    // Parse S-Record file and load it into RAM
+    parse_srec(srec_filename, g_ram, RAM_SIZE);
+}
+
+void g68k_execute_cycles(unsigned int cycles)
+{
+    if (cycles == 0)
+        return;
+
+    // Run the CPU for the specified number of cycles
+    m68k_execute(cycles);
+
+    // Update NMI device
+    nmi_device_update();
 }
 // =============================================================

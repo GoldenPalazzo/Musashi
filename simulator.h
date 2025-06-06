@@ -16,4 +16,6 @@ void cpu_pc_changed(unsigned int pc);
 void parse_srec(const char *filename, unsigned char *ram, unsigned int ram_size);
 int m68k_register_from_string(const char *reg_name);
 
+void g68k_setup(const char *srec_filename);
+void g68k_execute_cycles(unsigned int cycles);
 #endif /* SIM__HEADER */
