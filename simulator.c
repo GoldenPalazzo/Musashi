@@ -226,6 +226,9 @@ void int_controller_clear(unsigned int value)
 // Parse SREC file and load it into RAM
 void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
 {
+#ifdef DEBUG
+    printf("Parsing S-Record file: %s\n", filename);
+#endif
     FILE* file = fopen(filename, "rb");
     if (!file)
     {
@@ -235,6 +238,9 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
     char line[256];
     while (fgets(line, sizeof(line), file))
     {
+#ifdef DEBUG
+        printf("Processing line: %s", line);
+#endif
         if (line[0] != 'S') continue; // Skip non-S-Record lines
         short record_type = line[1] - '0'; // Get record type (S0, S1, S2, etc.)
         char byte_count_char[3] = { line[2], line[3], '\0' };
@@ -243,6 +249,9 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
         {
             exit_error("Invalid byte count in S-Record: %d", byte_count);
         }
+#ifdef DEBUG
+        printf("Record Type: %d, Byte Count: %ld (0x%lx)\n", record_type, byte_count, byte_count);
+#endif
         if (record_type > 0)
         {
 
@@ -260,6 +269,9 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
             address = (unsigned int)strtol(address_str, NULL, 16); // Convert address from hex to int
             free(address_str);
 
+#ifdef DEBUG
+            printf("Address: %04lx\n", address);
+#endif
             if (record_type < 4)
             {
 
