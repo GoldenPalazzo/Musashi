@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
                     printf("State request received\n");
                     break;
                 default:
-                    printf("Unknown message type: %d\n", msg);
+                    printf("Unknown message type: %d\n", cmd);
             }
             send_msg("Message received");
         }
