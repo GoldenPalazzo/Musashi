@@ -9,7 +9,6 @@
 #include "server.h"
 
 #define PORT 2601
-#define BUFSIZE 128
 
 int g_server_fd, g_client_fd, g_max_fd;
 struct sockaddr_in g_server_addr, g_client_addr;
@@ -79,10 +78,10 @@ void handle_fds()
 
 srv_msg_t get_client_msg(const char* args)
 {
-    char buffer[BUFSIZE] = {0};
+    char buffer[GBUF_SIZE] = {0};
     if (FD_ISSET(g_client_fd, &g_read_fds))
     {
-        int bytes_read = recv(g_client_fd, buffer, BUFSIZE - 1, 0);
+        int bytes_read = recv(g_client_fd, buffer, GBUF_SIZE - 1, 0);
         if (bytes_read < 0)
         {
             perror("recv");
@@ -99,35 +98,35 @@ srv_msg_t get_client_msg(const char* args)
         {
             if (strcasecmp(buffer, "quit") == 0)
             {
-                return QUIT;
+                return G68K_QUIT;
             }
             else if (strcasecmp(buffer, "nmi") == 0)
             {
-                return NMI;
+                return G68K_NMI;
             }
             else if (strcasecmp(buffer, "step") == 0)
             {
-                return STEP;
+                return G68K_STEP;
             }
             else if (strncasecmp(buffer, "rreg", 4) == 0)
             {
-                return RREG;
+                return G68K_RREG;
             }
             else if (strncasecmp(buffer, "wreg", 4) == 0)
             {
-                return WREG;
+                return G68K_WREG;
             }
             else if (strcasecmp(buffer, "state") == 0)
             {
-                return STATE;
+                return G68K_STATE;
             }
             else
             {
-                return UNKNOWN;
+                return G68K_UNKNOWN;
             }
         }
     }
-    return NOMSG;
+    return G68K_NOMSG;
 }
 
 void send_msg(const char* msg)

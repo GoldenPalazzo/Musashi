@@ -1,6 +1,8 @@
 #ifndef SRV__HEADER
 #define SRV__HEADER
 
+#define GBUF_SIZE 1024
+
 typedef enum
 {
     G68K_NOMSG = 0,
