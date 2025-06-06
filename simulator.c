@@ -31,11 +31,10 @@
 #define RAM_SIZE 0x40000 // 256K RAM
 // =============================================================
 // Global variables
-unsigned int g_quit = 0;
 unsigned int g_nmi = 0;
 unsigned int g_irq_highest_level = 0;
 unsigned int g_irq_pending = 0;
-unsigned char g_ram[RAM_SIZE] = {0};
+unsigned char g_ram[RAM_SIZE];
 // =============================================================
 // Prototypes
 // Musashi functions
@@ -77,7 +76,7 @@ void int_controller_clear(unsigned int value);
 void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size);
 void cpu_instr_callback(unsigned int pc);
 void cpu_pc_changed(unsigned int pc);
-m68k_register_t m68k_register_from_string(const char* reg_name);
+int m68k_register_from_string(const char* reg_name);
 // =============================================================
 // Definitions
 
@@ -309,7 +308,7 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
 }
 
 // Convert register name to m68k_register_t enum
-m68k_register_t m68k_register_from_string(const char* reg_name)
+int m68k_register_from_string(const char* reg_name)
 {
     if (strcmp(reg_name, "D0") == 0) return M68K_REG_D0;
     if (strcmp(reg_name, "D1") == 0) return M68K_REG_D1;
