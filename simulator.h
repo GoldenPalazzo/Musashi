@@ -14,4 +14,6 @@ void cpu_instr_callback(unsigned int pc);
 void cpu_pc_changed(unsigned int pc);
 
 void parse_srec(const char *filename, unsigned char *ram, unsigned int ram_size);
+int m68k_register_from_string(const char *reg_name);
+
 #endif /* SIM__HEADER */
