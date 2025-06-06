@@ -232,7 +232,8 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
     FILE* file = fopen(filename, "rb");
     if (!file)
     {
-        exit_error("Failed to open S-Record file: %s", filename);
+        fprintf(stderr, "Failed to open S-Record file: %s", filename);
+        exit(EXIT_FAILURE);
     }
 
     char line[256];
@@ -247,7 +248,8 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
         long byte_count = strtol(byte_count_char, NULL, 16); // Convert byte count from hex to int
         if (byte_count < 3 || byte_count > 255)
         {
-            exit_error("Invalid byte count in S-Record: %d", byte_count);
+            fprintf(stderr, "Invalid byte count in S-Record: %s", line);
+            fclose(file);
         }
 #ifdef DEBUG
         printf("Record Type: %d, Byte Count: %ld (0x%lx)\n", record_type, byte_count, byte_count);
@@ -262,7 +264,9 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
             char* address_str = malloc(sizeof(char) * (address_bytes * 2 + 1));
             if (!address_str)
             {
-                exit_error("Memory allocation failed for address string");
+                fprintf(stderr, "Memory allocation failed for address string");
+                fclose(file);
+                exit(EXIT_FAILURE);
             }
             strncpy(address_str, line + 4, address_bytes * 2);
             address_str[address_bytes * 2] = '\0'; // Null-terminate the string
@@ -278,14 +282,18 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
                 size_t data_byte_count = byte_count - address_bytes - 1; // Data length
                 if (address + data_byte_count > ram_size)
                 {
-                    exit_error("S-Record data exceeds RAM size at address %04x", address);
+                    fprintf(stderr, "S-Record data exceeds RAM size at address %04lx", address);
+                    fclose(file);
+                    exit(EXIT_FAILURE);
                 }
                 for (size_t i = 0; i < data_byte_count; i++)
                 {
                     char* data_byte = malloc(sizeof(unsigned char) * 3);
                     if (!data_byte)
                     {
-                        exit_error("Memory allocation failed for data byte");
+                        fprintf(stderr, "Memory allocation failed for data byte");
+                        fclose(file);
+                        exit(EXIT_FAILURE);
                     }
                     strncpy(data_byte, line + 4 + address_bytes * 2 + i * 2, 2);
                     data_byte[2] = '\0'; // Null-terminate the string
@@ -299,7 +307,9 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
                 // Set PC (entrypoint)
                 if (address >= ram_size)
                 {
-                    exit_error("S-Record PC exceeds RAM size at address %04x", address);
+                    fprintf(stderr, "S-Record PC exceeds RAM size at address %04lx", address);
+                    fclose(file);
+                    exit(EXIT_FAILURE);
                 }
                 m68k_set_reg(M68K_REG_PC, address);
             }
