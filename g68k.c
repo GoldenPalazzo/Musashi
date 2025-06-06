@@ -57,6 +57,26 @@ int main(int argc, char *argv[])
                     break;
                 case G68K_WREG:
                     // Handle write register request
+                    {
+                        char reg_name[10] = {0};
+                        unsigned int value = 0;
+                        sscanf(args, "%9s %x", reg_name, &value);
+                        m68k_register_t reg = m68k_register_from_string(reg_name);
+                        if (reg == 1337) // 1337 is the unknown register value
+                        {
+                            snprintf(msg, sizeof(msg), "wrongreg");
+                        }
+                        else if (value > 0xFFFFFFFF)
+                        {
+                            snprintf(msg, sizeof(msg), "valueoutofrange");
+                        }
+                        else
+                        {
+                            m68k_set_reg(reg, value);
+                            snprintf(msg, sizeof(msg), "ok");
+                            printf("%s\n", msg);
+                        }
+                    }
                     break;
                 case G68K_STATE:
                     // Handle state request
