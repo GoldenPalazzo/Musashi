@@ -13,22 +13,25 @@ int main(int argc, char *argv[])
     }
     g68k_setup(argv[1]);
     server_setup();
-    while (1)
+    int g_quit = 0;
+    char args[GBUF_SIZE] = {0};
+    char msg[GBUF_SIZE] = {0};
+    while (!g_quit)
     {
         handle_fds();
-        char args[GBUF_SIZE] = {0};
         srv_msg_t cmd = get_client_msg(args);
         if (cmd == G68K_NOMSG)
             ;
         else
         {
             printf("Received message: %d\n", cmd);
-            char msg[GBUF_SIZE] = {0};
+            strcpy(msg, "ok");
             switch (cmd)
             {
                 case G68K_QUIT:
                     printf("Exiting...\n");
-                    return 0;
+                    g_quit = 1;
+                    break;
                 case G68K_NMI:
                     break;
                 case G68K_STEP:
@@ -67,7 +70,7 @@ int main(int argc, char *argv[])
                 default:
                     printf("Unknown message type: %d\n", cmd);
             }
-            send_msg("Message received");
+            send_msg(msg);
         }
     }
     return 0;
