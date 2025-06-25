@@ -12,12 +12,17 @@ typedef enum
     G68K_STEP,
     G68K_RREG,
     G68K_WREG,
+    G68K_RMEM,
+    G68K_WMEM,
+    G68K_RESET,
+    G68K_SETBP,
+    G68K_RMBP,
     G68K_STATE,
 } srv_msg_t;
 
 void server_setup(void);
 void handle_fds(void);
-srv_msg_t get_client_msg(const char* args);
+srv_msg_t get_client_msg(char* args);
 void send_msg(const char* msg);
 
 #endif

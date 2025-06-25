@@ -28,7 +28,6 @@
                                                    (BASE)[(ADDR)+3] = (VAL)&0xff
 // Other macros
 #define IRQ_NMI 7
-#define RAM_SIZE 0x40000 // 256K RAM
 // =============================================================
 // Global variables
 unsigned int g_nmi = 0;
@@ -73,13 +72,13 @@ void int_controller_set(unsigned int value);
 void int_controller_clear(unsigned int value);
 
 // Golden functions
-void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size);
+void parse_srec(const char* filename);
 void cpu_instr_callback(unsigned int pc);
 void cpu_pc_changed(unsigned int pc);
 int m68k_register_from_string(const char* reg_name);
 
 // External functions
-void g68k_setup(const char* srec_filename);
+void g68k_setup();
 void g68k_execute_cycles(unsigned int cycles);
 // =============================================================
 // Definitions
@@ -227,8 +226,21 @@ void int_controller_clear(unsigned int value)
     m68k_set_irq(g_irq_highest_level);
 }
 
+void g68k_memcpy(unsigned int dest, const unsigned char* src, size_t size)
+{
+    if (src == NULL || size == 0) {
+        fprintf(stderr, "Invalid memory copy parameters\n");
+        return;
+    }
+    if ((dest + size >= RAM_SIZE) || (dest < 0)) {
+        fprintf(stderr, "Memory copy out of bounds\n");
+        return;
+    }
+    memcpy(g_ram + dest, src, size);
+} // End of m68k_memcpy function
+
 // Parse SREC file and load it into RAM
-void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
+void parse_srec(const char* filename)
 {
 #ifdef DEBUG
     printf("Parsing S-Record file: %s\n", filename);
@@ -283,7 +295,7 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
             {
 
                 size_t data_byte_count = byte_count - address_bytes - 1; // Data length
-                if (address + data_byte_count > ram_size)
+                if (address + data_byte_count >= RAM_SIZE)
                 {
                     fprintf(stderr, "S-Record data exceeds RAM size at address %04lx", address);
                     fclose(file);
@@ -302,13 +314,13 @@ void parse_srec(const char* filename, unsigned char* ram, unsigned int ram_size)
                     data_byte[2] = '\0'; // Null-terminate the string
                     unsigned char data = (unsigned char)strtol(data_byte, NULL, 16);
                     free(data_byte);
-                    memset(ram + address + i, data, 1); // Write data to RAM
+                    g68k_memcpy(address + i, &data, sizeof(unsigned char));
                 }
             }
             else if (record_type > 6 && record_type < 10)
             {
                 // Set PC (entrypoint)
-                if (address >= ram_size)
+                if (address >= RAM_SIZE)
                 {
                     fprintf(stderr, "S-Record PC exceeds RAM size at address %04lx", address);
                     fclose(file);
@@ -360,29 +372,24 @@ int m68k_register_from_string(const char* reg_name)
 }
 
 // Setup function for the simulator
-void g68k_setup(const char* srec_filename)
+void g68k_setup(void)
 {
-    if (srec_filename == NULL || strlen(srec_filename) == 0)
-    {
-        fprintf(stderr, "S-Record filename cannot be empty\n");
-        exit(EXIT_FAILURE);
-    }
-
     // Initialize RAM
     memset(g_ram, 0, RAM_SIZE);
 
-    // Parse S-Record file and load it into RAM
-    parse_srec(srec_filename, g_ram, RAM_SIZE);
-
     m68k_init();
     m68k_set_cpu_type(M68K_CPU_TYPE_68000);
-    m68k_pulse_reset(); // Pulse reset to initialize the CPU
-    nmi_device_reset(); // Reset NMI device
-    g_nmi = 0; // Clear NMI flag
-    g_irq_highest_level = 0; // Clear highest IRQ level
-    g_irq_pending = 0; // Clear pending IRQs
-    // Parse S-Record file and load it into RAM
-    parse_srec(srec_filename, g_ram, RAM_SIZE);
+    g68k_reset();
+}
+
+void g68k_reset(void)
+{
+    // Reset the CPU and devices
+    m68k_pulse_reset();
+    nmi_device_reset();
+    g_nmi = 0;
+    g_irq_highest_level = 0;
+    g_irq_pending = 0;
 }
 
 void g68k_execute_cycles(unsigned int cycles)

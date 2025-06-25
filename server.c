@@ -22,6 +22,8 @@ void server_setup()
     g_server_addr.sin_addr.s_addr = INADDR_ANY;
     g_server_addr.sin_port = htons(PORT);
     g_server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    int opt = 1;
+    setsockopt(g_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     fcntl(g_server_fd, F_SETFL, O_NONBLOCK);
     if (g_server_fd < 0)
     {
@@ -76,7 +78,7 @@ void handle_fds()
     }
 }
 
-srv_msg_t get_client_msg(const char* args)
+srv_msg_t get_client_msg(char* args)
 {
     char buffer[GBUF_SIZE] = {0};
     if (FD_ISSET(g_client_fd, &g_read_fds))
@@ -110,11 +112,27 @@ srv_msg_t get_client_msg(const char* args)
             }
             else if (strncasecmp(buffer, "rreg", 4) == 0)
             {
+                strncpy(args, buffer + 5, GBUF_SIZE - 1);
                 return G68K_RREG;
             }
             else if (strncasecmp(buffer, "wreg", 4) == 0)
             {
+                strncpy(args, buffer + 5, GBUF_SIZE - 1);
                 return G68K_WREG;
+            }
+            else if (strncasecmp(buffer, "rmem", 4) == 0)
+            {
+                strncpy(args, buffer + 5, GBUF_SIZE - 1);
+                return G68K_RMEM;
+            }
+            else if (strncasecmp(buffer, "wmem", 4) == 0)
+            {
+                strncpy(args, buffer + 5, GBUF_SIZE - 1);
+                return G68K_WMEM;
+            }
+            else if (strcasecmp(buffer, "reset") == 0)
+            {
+                return G68K_RESET;
             }
             else if (strcasecmp(buffer, "state") == 0)
             {

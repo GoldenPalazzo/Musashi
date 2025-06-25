@@ -1,5 +1,8 @@
+#include <stddef.h> // for size_t
 #ifndef SIM__HEADER
 #define SIM__HEADER
+
+#define RAM_SIZE 0x40000 // 256K RAM
 
 unsigned int cpu_read_byte(unsigned int address);
 unsigned int cpu_read_word(unsigned int address);
@@ -13,9 +16,11 @@ int  cpu_irq_ack(int level);
 void cpu_instr_callback(unsigned int pc);
 void cpu_pc_changed(unsigned int pc);
 
-void parse_srec(const char *filename, unsigned char *ram, unsigned int ram_size);
+void parse_srec(const char *filename);
 int m68k_register_from_string(const char *reg_name);
 
-void g68k_setup(const char *srec_filename);
+void g68k_setup(void);
+void g68k_memcpy(unsigned int dest, const unsigned char* src, size_t size);
+void g68k_reset(void);
 void g68k_execute_cycles(unsigned int cycles);
 #endif /* SIM__HEADER */
