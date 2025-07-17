@@ -11,7 +11,7 @@
 #include "simulator.h"
 
 
-int main()
+int main(void)
 {
 
 }
@@ -19,19 +19,24 @@ int main()
 //#ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 
-EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_setup()
+EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_setup(void)
 {
     g68k_setup();
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_reset()
+EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_reset(void)
 {
     g68k_reset();
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_memcpy(unsigned int dest, const unsigned char* src, size_t size)
+EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_copy_to_ram(unsigned int dest, const unsigned char* src, size_t size)
 {
-    g68k_memcpy(dest, src, size);
+    g68k_copy_to_ram(dest, src, size);
+}
+
+EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_copy_from_ram(unsigned char* dest, const size_t src, size_t size)
+{
+    g68k_copy_from_ram(dest, src, size);
 }
 
 EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_execute_cycles(unsigned int cycles)
@@ -49,4 +54,8 @@ EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_set_reg(m68k_register_t reg, unsigned in
     m68k_set_reg(reg, value);
 }
 
+EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_clean_ram(void)
+{
+    g68k_clean_ram();
+}
 //#endif

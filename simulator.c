@@ -80,6 +80,11 @@ int m68k_register_from_string(const char* reg_name);
 // External functions
 void g68k_setup();
 void g68k_execute_cycles(unsigned int cycles);
+void g68k_clean_ram(void);
+void g68k_reset(void);
+void g68k_copy_to_ram(size_t dest, const unsigned char* src, size_t size);
+void g68k_copy_from_ram(unsigned char* dest, const size_t src, size_t size);
+void g68k_clean_ram(void);
 // =============================================================
 // Definitions
 
@@ -226,7 +231,7 @@ void int_controller_clear(unsigned int value)
     m68k_set_irq(g_irq_highest_level);
 }
 
-void g68k_memcpy(unsigned int dest, const unsigned char* src, size_t size)
+void g68k_copy_to_ram(size_t dest, const unsigned char* src, size_t size)
 {
     if (src == NULL || size == 0) {
         fprintf(stderr, "Invalid memory copy parameters\n");
@@ -237,7 +242,21 @@ void g68k_memcpy(unsigned int dest, const unsigned char* src, size_t size)
         return;
     }
     memcpy(g_ram + dest, src, size);
-} // End of m68k_memcpy function
+}
+
+void g68k_copy_from_ram(unsigned char* dest, const size_t src, size_t size)
+{
+    if (dest == NULL || size == 0)
+    {
+        fprintf(stderr, "Invalid memory copy parameters\n");
+        return;
+    }
+    if ((src + size >= RAM_SIZE) || (src < 0)) {
+        fprintf(stderr, "Memory copy out of bounds\n");
+        return;
+    }
+    memcpy(dest, g_ram + src, size);
+}
 
 // Parse SREC file and load it into RAM
 void parse_srec(const char* filename)
@@ -402,5 +421,11 @@ void g68k_execute_cycles(unsigned int cycles)
 
     // Update NMI device
     nmi_device_update();
+}
+
+void g68k_clean_ram(void)
+{
+    // Clear the RAM
+    memset(g_ram, 0, RAM_SIZE);
 }
 // =============================================================
