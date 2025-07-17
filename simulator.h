@@ -20,7 +20,7 @@ void parse_srec(const char *filename);
 int m68k_register_from_string(const char *reg_name);
 
 void g68k_setup(void);
-void g68k_copy_to_ram(unsigned int dest, const unsigned char* src, size_t size);
+void g68k_copy_to_ram(size_t dest, const unsigned char* src, size_t size);
 void g68k_copy_from_ram(unsigned char* dest, const size_t src, size_t size);
 void g68k_reset(void);
 void g68k_execute_cycles(unsigned int cycles);

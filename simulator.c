@@ -333,7 +333,7 @@ void parse_srec(const char* filename)
                     data_byte[2] = '\0'; // Null-terminate the string
                     unsigned char data = (unsigned char)strtol(data_byte, NULL, 16);
                     free(data_byte);
-                    g68k_memcpy(address + i, &data, sizeof(unsigned char));
+                    g68k_copy_to_ram(address + i, &data, sizeof(unsigned char));
                 }
             }
             else if (record_type > 6 && record_type < 10)
