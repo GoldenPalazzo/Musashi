@@ -25,3 +25,6 @@ m68kmake
 m68kops.?
 sim
 tags
+
+# Typescript
+node_modules/
