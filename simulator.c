@@ -393,9 +393,6 @@ int m68k_register_from_string(const char* reg_name)
 // Setup function for the simulator
 void g68k_setup(void)
 {
-    // Initialize RAM
-    memset(g_ram, 0, RAM_SIZE);
-
     m68k_init();
     m68k_set_cpu_type(M68K_CPU_TYPE_68000);
     g68k_reset();
