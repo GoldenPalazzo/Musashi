@@ -33,7 +33,7 @@ ifeq ($(WASM),1)
 				-sEXPORTED_FUNCTIONS="['_malloc','_free','_emg68k_setup',\
 				'_emg68k_reset','_emg68k_copy_from_ram','_emg68k_copy_to_ram',\
 				'_emg68k_execute_cycles','_emg68k_get_reg','_emg68k_set_reg',\
-				'_emg68k_clean_ram']"
+				'_emg68k_clean_ram']" -lembind --emit-tsd emg68k.d.ts
 	TARGET = emg68k.js
 else
 	TARGET    = $(EXENAME)$(EXE)
