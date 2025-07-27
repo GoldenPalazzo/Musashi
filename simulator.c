@@ -34,6 +34,7 @@ unsigned int g_nmi = 0;
 unsigned int g_irq_highest_level = 0;
 unsigned int g_irq_pending = 0;
 unsigned char g_ram[RAM_SIZE];
+unsigned char g_fc = 0; // Function code for memory access
 // =============================================================
 // Prototypes
 // Musashi functions
@@ -132,50 +133,98 @@ void exit_error(char* fmt, ...)
 // Read and write functions for the CPU memory
 unsigned int cpu_read_byte(unsigned int address)
 {
-    if(address >= RAM_SIZE)
-        exit_error("Read byte from invalid address %04x", address);
-    return READ_BYTE(g_ram, address);
+    if(address >= 0 && address < SCREEN_ADDR)
+        return READ_BYTE(g_ram, address);
+    if(address >= SCREEN_ADDR && address < SCREEN_ADDR + SCREEN_SIZE_TOTAL)
+        return 0; // Screen memory is not readable
+    exit_error("Read byte from invalid address %04x", address);
+    return 0;
 }
 
 unsigned int cpu_read_word(unsigned int address)
 {
-    if(address >= RAM_SIZE || address & 1)
-        exit_error("Read word from invalid address %04x", address);
-    return READ_WORD(g_ram, address);
+    if(address >= 0 && address < SCREEN_ADDR)
+        return READ_WORD(g_ram, address);
+    if(address >= SCREEN_ADDR && address < SCREEN_ADDR + SCREEN_SIZE_TOTAL)
+        return 0; // Screen memory is not readable
+    exit_error("Read word from invalid address %04x", address);
+    return 0;
 }
 
 unsigned int cpu_read_long(unsigned int address)
 {
-    if(address >= RAM_SIZE || address & 3)
-        exit_error("Read long from invalid address %04x", address);
-    return READ_LONG(g_ram, address);
+    if(address >= 0 && address < SCREEN_ADDR)
+        return READ_LONG(g_ram, address);
+    if(address >= SCREEN_ADDR && address < SCREEN_ADDR + SCREEN_SIZE_TOTAL)
+        return 0; // Screen memory is not readable
+    exit_error("Read long from invalid address %04x", address);
+    return 0;
 }
 
 void cpu_write_byte(unsigned int address, unsigned int value)
 {
-    if(address >= RAM_SIZE)
-        exit_error("Write byte to invalid address %04x", address);
-    WRITE_BYTE(g_ram, address, value);
+    if (address >= 0 && address < RAM_SIZE)
+    {
+        WRITE_BYTE(g_ram, address, value);
+        return;
+    }
+    if (address >= SCREEN_ADDR && address < SCREEN_ADDR + SCREEN_SIZE_TOTAL)
+    {
+#ifdef WASM
+        // If running in a WebAssembly environment, write to the screen memory
+        screen_write(address - SCREEN_ADDR, value);
+        return;
+#endif
+    }
+    exit_error("Write byte to invalid address %04x", address);
 }
 
 void cpu_write_word(unsigned int address, unsigned int value)
 {
-    if(address >= RAM_SIZE || address & 1)
-        exit_error("Write word to invalid address %04x", address);
-    WRITE_WORD(g_ram, address, value);
+    if (address >= 0 && address < RAM_SIZE)
+    {
+        WRITE_WORD(g_ram, address, value);
+        return;
+    }
+    if (address >= SCREEN_ADDR && address < SCREEN_ADDR + SCREEN_SIZE_TOTAL)
+    {
+#ifdef WASM
+        // If running in a WebAssembly environment, write to the screen memory
+        screen_write(address - SCREEN_ADDR, value);
+        return;
+#endif
+    }
+    exit_error("Write word to invalid address %04x", address);
 }
 
 void cpu_write_long(unsigned int address, unsigned int value)
 {
-    if(address >= RAM_SIZE || address & 3)
-        exit_error("Write long to invalid address %04x", address);
-    WRITE_LONG(g_ram, address, value);
+    if (address >= 0 && address < RAM_SIZE)
+    {
+        WRITE_LONG(g_ram, address, value);
+        return;
+    }
+    if (address >= SCREEN_ADDR && address < SCREEN_ADDR + SCREEN_SIZE_TOTAL)
+    {
+#ifdef WASM
+        // If running in a WebAssembly environment, write to the screen memory
+        screen_write(address - SCREEN_ADDR, value);
+        return;
+#endif
+    }
+    exit_error("Write long to invalid address %04x", address);
 }
 
 // Pulse reset function for the CPU
 void cpu_pulse_reset(void)
 {
     nmi_device_reset();
+}
+
+// Set function code for the CPU
+void cpu_set_fc(unsigned int fc)
+{
+    g_fc = fc;
 }
 
 // Acknowledge IRQs
@@ -426,3 +475,6 @@ void g68k_clean_ram(void)
     memset(g_ram, 0, RAM_SIZE);
 }
 // =============================================================
+#ifdef WASM
+void (*screen_write)(size_t offset, unsigned int value) = NULL;
+#endif

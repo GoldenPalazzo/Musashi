@@ -27,13 +27,15 @@ endif
 LFLAGS    = $(WARNINGS)
 ifeq ($(WASM),1)
 	CC = emcc
-	LFLAGS += -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','stringToUTF8','setValue','HEAPU8'] \
-				-sMODULARIZE=1 -sEXPORT_NAME="emG68k" -sALLOW_MEMORY_GROWTH=1 \
+	CFLAGS += -DWASM
+	LFLAGS += -sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','stringToUTF8','setValue','HEAPU8','addFunction'] \
+				-sMODULARIZE=1 -sEXPORT_NAME="emG68k" -sALLOW_MEMORY_GROWTH \
 				-sENVIRONMENT=web -sNO_EXIT_RUNTIME=1 -sEXPORT_ES6=1 \
 				-sEXPORTED_FUNCTIONS="['_malloc','_free','_emg68k_setup',\
 				'_emg68k_reset','_emg68k_copy_from_ram','_emg68k_copy_to_ram',\
 				'_emg68k_execute_cycles','_emg68k_get_reg','_emg68k_set_reg',\
-				'_emg68k_clean_ram']" -lembind --emit-tsd emg68k.d.ts
+				'_emg68k_clean_ram']" -lembind -sALLOW_TABLE_GROWTH=1 \
+				--emit-tsd emg68k.d.ts
 	TARGET = emg68k.js
 else
 	TARGET    = $(EXENAME)$(EXE)

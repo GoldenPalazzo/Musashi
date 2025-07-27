@@ -19,8 +19,9 @@ int main(void)
 //#ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 
-EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_setup(void)
+EXTERN EMSCRIPTEN_KEEPALIVE void emg68k_setup(size_t screen_write_pointer)
 {
+    screen_write = (void (*)(size_t, unsigned int))screen_write_pointer;
     g68k_setup();
 }
 
