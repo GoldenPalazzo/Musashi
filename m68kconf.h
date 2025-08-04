@@ -166,14 +166,14 @@
 
 
 /* If ON, the CPU will emulate the 4-byte prefetch queue of a real 68000 */
-#define M68K_EMULATE_PREFETCH       OPT_OFF
+#define M68K_EMULATE_PREFETCH       OPT_ON
 
 
 /* If ON, the CPU will generate address error exceptions if it tries to
  * access a word or longword at an odd address.
  * NOTE: This is only emulated properly for 68000 mode.
  */
-#define M68K_EMULATE_ADDRESS_ERROR  OPT_OFF
+#define M68K_EMULATE_ADDRESS_ERROR  OPT_ON
 
 
 /* Turn ON to enable logging of illegal instruction calls.
@@ -199,6 +199,17 @@
  * operations.
 */
 #define M68K_USE_64_BIT  OPT_ON
+
+#define m68k_read_memory_8(A) cpu_read_byte(A)
+#define m68k_read_memory_16(A) cpu_read_word(A)
+#define m68k_read_memory_32(A) cpu_read_long(A)
+
+#define m68k_read_disassembler_16(A) cpu_read_word(A)
+#define m68k_read_disassembler_32(A) cpu_read_long(A)
+
+#define m68k_write_memory_8(A, V) cpu_write_byte(A, V)
+#define m68k_write_memory_16(A, V) cpu_write_word(A, V)
+#define m68k_write_memory_32(A, V) cpu_write_long(A, V)
 
 
 #endif /* M68K_COMPILE_FOR_MAME */
