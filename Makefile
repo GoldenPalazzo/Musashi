@@ -16,14 +16,25 @@ EXEPATH = ./
 .CFILES   = $(MAINFILES) $(OSDFILES) $(MUSASHIFILES) $(MUSASHIGENCFILES)
 .OFILES   = $(.CFILES:%.c=%.o)
 
-CC        = gcc
+NATIVE_CC = gcc
+CC        = $(NATIVE_CC)
 WARNINGS  = -Wall -Wextra -pedantic
 CFLAGS    = $(WARNINGS)
 LFLAGS    = $(WARNINGS)
 
 
 ifeq ($(EMSCRIPTEN),1)
-	TARGET = $(EXENAME).js
+	CC = emcc
+	LFLAGS += -sEXPORTED_RUNTIME_METHODS="['ccall','cwrap','stringToUTF8',\
+				'setValue','HEAPU8','addFunction']" \
+				-sMODULARIZE=1 -sEXPORT_NAME="emsim" -sALLOW_MEMORY_GROWTH \
+				-sENVIRONMENT=web -sNO_EXIT_RUNTIME=1 -sEXPORT_ES6=1 \
+				-lembind -sALLOW_TABLE_GROWTH=1 --emit-tsd $(EXENAME).d.ts\
+				-sEXPORTED_FUNCTIONS="['_malloc','_free','_int_controller_set',\
+				'_int_controller_clear','_setup','_step','_execute',\
+				'_get_instruction_info','_get_reg','_set_reg','_ram_mv',\
+				'_ram_cp','_reset']"
+	TARGET = wasm/$(EXENAME).js
 else
 	TARGET = $(EXENAME)$(EXE)
 endif
@@ -39,6 +50,7 @@ clean:
 	rm -f $(DELETEFILES)
 
 $(TARGET): $(MUSASHIGENHFILES) $(.OFILES) Makefile
+	mkdir -p wasm
 	$(CC) -o $@ $(.OFILES) $(LFLAGS) -lm
 
 m68kcpu.o: $(MUSASHIGENHFILES) m68kfpu.c m68kmmu.h softfloat/softfloat.c softfloat/softfloat.h
@@ -47,4 +59,4 @@ $(MUSASHIGENCFILES) $(MUSASHIGENHFILES): $(MUSASHIGENERATOR)$(EXE)
 	$(EXEPATH)$(MUSASHIGENERATOR)$(EXE)
 
 $(MUSASHIGENERATOR)$(EXE):  $(MUSASHIGENERATOR).c
-	$(CC) -o  $(MUSASHIGENERATOR)$(EXE)  $(MUSASHIGENERATOR).c
+	$(NATIVE_CC) -o  $(MUSASHIGENERATOR)$(EXE)  $(MUSASHIGENERATOR).c

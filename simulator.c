@@ -1,8 +1,16 @@
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include "simulator.h"
 #include "m68k.h"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#define EM_EXPORT EMSCRIPTEN_KEEPALIVE
+#else
+#define EM_EXPORT
+#endif
 
 #define RAM_SIZE 0x1f400
 
@@ -133,6 +141,7 @@ int cpu_irq_ack(int level)
 }
 
 /* Interrupt controller implementation */
+EM_EXPORT
 void int_controller_set(unsigned int value)
 {
     if(value > 7)
@@ -148,6 +157,7 @@ void int_controller_set(unsigned int value)
     }
 }
 
+EM_EXPORT
 void int_controller_clear(unsigned int value)
 {
     if(value > 7)
@@ -165,7 +175,7 @@ void int_controller_clear(unsigned int value)
     m68k_set_irq(g_int_controller_highest_int);
 }
 
-
+EM_EXPORT
 unsigned int get_instruction_info(unsigned int pc, char* buff)
 {
     if (buff == NULL)
@@ -182,6 +192,82 @@ unsigned int get_instruction_info(unsigned int pc, char* buff)
     // Get instruction info at the specified PC
     return m68k_disassemble(buff, pc, M68K_CPU_TYPE_68000);
 }
+
+/* Some exports */
+
+EM_EXPORT
+void reset()
+{
+    // Reset the CPU and RAM
+    m68k_pulse_reset();
+    g_int_controller_pending = 0; // Clear pending interrupts
+    g_int_controller_highest_int = 0; // Reset highest pending interrupt
+}
+
+EM_EXPORT
+void setup()
+{
+    // Initialize the CPU and RAM
+    m68k_init();
+    m68k_set_cpu_type(M68K_CPU_TYPE_68000);
+    reset();
+}
+
+EM_EXPORT
+void step()
+{
+    // Execute one instruction
+    m68k_execute_step();
+}
+
+EM_EXPORT
+void execute(unsigned int cycles)
+{
+    // Execute a number of cycles
+    m68k_execute(cycles);
+}
+
+EM_EXPORT
+unsigned int get_reg(m68k_register_t reg)
+{
+    return m68k_get_reg(NULL, reg);
+}
+
+EM_EXPORT
+void set_reg(m68k_register_t reg, unsigned int value)
+{
+    m68k_set_reg(reg, value);
+}
+
+EM_EXPORT
+void ram_cp(size_t dest, const unsigned char* src, size_t size)
+{
+    if (src == NULL || size == 0) {
+        fprintf(stderr, "Invalid memory copy parameters\n");
+        return;
+    }
+    if ((dest + size > RAM_SIZE) || (dest < 0)) {
+        fprintf(stderr, "Memory copy out of bounds (dest: %lx, size: %lu))\n", dest, size);
+        return;
+    }
+    memcpy(g_ram + dest, src, size);
+}
+
+EM_EXPORT
+void ram_mv(unsigned char* dest, const size_t src, size_t size)
+{
+    if (dest == NULL || size == 0)
+    {
+        fprintf(stderr, "Invalid memory copy parameters\n");
+        return;
+    }
+    if ((src + size > RAM_SIZE) || (src < 0)) {
+        fprintf(stderr, "Memory copy out of bounds (src: %lx, size: %lu)\n", src, size);
+        return;
+    }
+    memcpy(dest, g_ram + src, size);
+}
+
 
 
 int main()
