@@ -320,6 +320,8 @@ void m68k_pulse_reset(void);
 
 /* execute num_cycles worth of instructions.  returns number of cycles used */
 int m68k_execute(int num_cycles);
+/* execute only one instruction. returns number of cycles used */
+int m68k_execute_step();
 
 /* These functions let you read/write/modify the number of cycles left to run
  * while m68k_execute() is running.
