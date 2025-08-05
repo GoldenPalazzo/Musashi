@@ -214,17 +214,17 @@ void setup()
 }
 
 EM_EXPORT
-void step()
+unsigned int step()
 {
     // Execute one instruction
-    m68k_execute_step();
+    return m68k_execute_step();
 }
 
 EM_EXPORT
-void execute(unsigned int cycles)
+unsigned int execute(unsigned int cycles)
 {
     // Execute a number of cycles
-    m68k_execute(cycles);
+    return m68k_execute(cycles);
 }
 
 EM_EXPORT
