@@ -254,7 +254,7 @@ void cp_to_ram(size_t dest, const unsigned char* src, size_t size)
 }
 
 EM_EXPORT
-void mv_to_ram(unsigned char* dest, const size_t src, size_t size)
+void cp_from_ram(unsigned char* dest, const size_t src, size_t size)
 {
     if (dest == NULL || size == 0)
     {
