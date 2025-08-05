@@ -32,8 +32,8 @@ ifeq ($(EMSCRIPTEN),1)
 				-lembind -sALLOW_TABLE_GROWTH=1 --emit-tsd $(EXENAME).d.ts\
 				-sEXPORTED_FUNCTIONS="['_malloc','_free','_int_controller_set',\
 				'_int_controller_clear','_setup','_step','_execute',\
-				'_get_instruction_info','_get_reg','_set_reg','_ram_mv',\
-				'_ram_cp','_reset']"
+				'_get_instruction_info','_get_reg','_set_reg','_cp_to_ram',\
+				'_cp_from_ram','_reset']"
 	TARGET = wasm/$(EXENAME).js
 else
 	TARGET = $(EXENAME)$(EXE)

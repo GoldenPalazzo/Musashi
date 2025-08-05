@@ -240,7 +240,7 @@ void set_reg(m68k_register_t reg, unsigned int value)
 }
 
 EM_EXPORT
-void ram_cp(size_t dest, const unsigned char* src, size_t size)
+void cp_to_ram(size_t dest, const unsigned char* src, size_t size)
 {
     if (src == NULL || size == 0) {
         fprintf(stderr, "Invalid memory copy parameters\n");
@@ -254,7 +254,7 @@ void ram_cp(size_t dest, const unsigned char* src, size_t size)
 }
 
 EM_EXPORT
-void ram_mv(unsigned char* dest, const size_t src, size_t size)
+void mv_to_ram(unsigned char* dest, const size_t src, size_t size)
 {
     if (dest == NULL || size == 0)
     {
