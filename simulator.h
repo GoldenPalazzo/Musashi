@@ -13,4 +13,7 @@ int  cpu_irq_ack(int level);
 //
 unsigned int get_instruction_info(unsigned int pc, char* buff);
 
+
+void instruction_hook(unsigned int pc);
+
 #endif /* SIM__HEADER */

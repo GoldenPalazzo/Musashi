@@ -268,9 +268,147 @@ void cp_from_ram(unsigned char* dest, const size_t src, size_t size)
     memcpy(dest, g_ram + src, size);
 }
 
+#ifndef __EMSCRIPTEN__
 
 
-int main()
+void parse_srec(const char* filename)
 {
-    return 0;
+#ifdef DEBUG
+    printf("Parsing S-Record file: %s\n", filename);
+#endif
+    FILE* file = fopen(filename, "rb");
+    if (!file)
+    {
+        fprintf(stderr, "Failed to open S-Record file: %s", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file))
+    {
+#ifdef DEBUG
+        printf("Processing line: %s", line);
+#endif
+        if (line[0] != 'S') continue; // Skip non-S-Record lines
+        short record_type = line[1] - '0'; // Get record type (S0, S1, S2, etc.)
+        char byte_count_char[3] = { line[2], line[3], '\0' };
+        long byte_count = strtol(byte_count_char, NULL, 16); // Convert byte count from hex to int
+        if (byte_count < 3 || byte_count > 255)
+        {
+            fprintf(stderr, "Invalid byte count in S-Record: %s", line);
+            fclose(file);
+        }
+#ifdef DEBUG
+        printf("Record Type: %d, Byte Count: %ld (0x%lx)\n", record_type, byte_count, byte_count);
+#endif
+        if (record_type > 0)
+        {
+
+            size_t address = 0;
+
+            size_t address_bytes = 2 + (record_type<4 ? record_type-1 : 2-record_type%7);
+            // S1, S2, S3 records contain address
+            char* address_str = malloc(sizeof(char) * (address_bytes * 2 + 1));
+            if (!address_str)
+            {
+                fprintf(stderr, "Memory allocation failed for address string");
+                fclose(file);
+                exit(EXIT_FAILURE);
+            }
+            strncpy(address_str, line + 4, address_bytes * 2);
+            address_str[address_bytes * 2] = '\0'; // Null-terminate the string
+            address = (unsigned int)strtol(address_str, NULL, 16); // Convert address from hex to int
+            free(address_str);
+#ifdef DEBUG
+            printf("Address: %04lx\n", address);
+#endif
+            if (record_type < 4)
+            {
+
+                size_t data_byte_count = byte_count - address_bytes - 1; // Data length
+                if (address + data_byte_count > RAM_SIZE)
+                {
+                    fprintf(stderr, "S-Record data exceeds RAM size at address %04lx", address);
+                    fclose(file);
+                    exit(EXIT_FAILURE);
+                }
+                for (size_t i = 0; i < data_byte_count; i++)
+                {
+                    char* data_byte = malloc(sizeof(unsigned char) * 3);
+                    if (!data_byte)
+                    {
+                        fprintf(stderr, "Memory allocation failed for data byte");
+                        fclose(file);
+                        exit(EXIT_FAILURE);
+                    }
+                    strncpy(data_byte, line + 4 + address_bytes * 2 + i * 2, 2);
+                    data_byte[2] = '\0'; // Null-terminate the string
+                    unsigned char data = (unsigned char)strtol(data_byte, NULL, 16);
+                    free(data_byte);
+                    cp_to_ram(address + i, &data, sizeof(unsigned char));
+                }
+            }
+            else if (record_type > 6 && record_type < 10)
+            {
+                // Set PC (entrypoint)
+                if (address >= RAM_SIZE)
+                {
+                    fprintf(stderr, "S-Record PC exceeds RAM size at address %04lx", address);
+                    fclose(file);
+                    exit(EXIT_FAILURE);
+                }
+                /*m68k_set_reg(M68K_REG_PC, address);*/
+            }
+        }
+        else if (record_type == 0)
+        {
+            // S0 record, usually contains header information
+            // We can ignore it for now
+        }
+
+        else
+        {
+            exit_error("Unsupported S-Record type: %d", record_type);
+        }
+    }
+
+    fclose(file);
 }
+
+void instruction_hook(unsigned int pc)
+{
+    /*return;*/
+    char buff[100];
+    m68k_disassemble(buff, pc, M68K_CPU_TYPE_68000);
+    // Print instruction and hex code
+    printf("%04x: %s (%02x %02x %02x %02x)\n",
+           pc, buff,
+           cpu_read_byte(pc), cpu_read_byte(pc + 1),
+           cpu_read_byte(pc + 2), cpu_read_byte(pc + 3));
+}
+
+int main(int argc, char* argv[])
+{
+    if (argc < 2)
+    {
+        fprintf(stderr, "Usage: %s <srec_file>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    setup(); // Initialize the simulator
+
+    parse_srec(argv[1]); // Load the S-Record file
+
+    m68k_pulse_reset();
+
+    printf("starting sr: %016b\n", m68k_get_reg(NULL, M68K_REG_SR));
+    while (1)
+    {
+        execute(1000); // Execute 1000 cycles
+        int_controller_set(1);
+    }
+
+    return EXIT_SUCCESS;
+}
+
+#endif

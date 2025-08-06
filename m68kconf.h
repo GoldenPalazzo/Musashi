@@ -200,6 +200,7 @@
 */
 #define M68K_USE_64_BIT  OPT_ON
 
+#include "simulator.h"
 #define m68k_read_memory_8(A) cpu_read_byte(A)
 #define m68k_read_memory_16(A) cpu_read_word(A)
 #define m68k_read_memory_32(A) cpu_read_long(A)
