@@ -26,14 +26,14 @@ LFLAGS    = $(WARNINGS)
 ifeq ($(EMSCRIPTEN),1)
 	CC = emcc
 	LFLAGS += -sEXPORTED_RUNTIME_METHODS="['ccall','cwrap','stringToUTF8',\
-				'setValue','HEAPU8','addFunction']" \
+				'setValue','HEAPU8','addFunction','FS']" \
 				-sMODULARIZE=1 -sEXPORT_NAME="emsim" -sALLOW_MEMORY_GROWTH \
 				-sENVIRONMENT=web -sNO_EXIT_RUNTIME=1 -sEXPORT_ES6=1 \
 				-lembind -sALLOW_TABLE_GROWTH=1 --emit-tsd $(EXENAME).d.ts\
 				-sEXPORTED_FUNCTIONS="['_malloc','_free','_int_controller_set',\
 				'_int_controller_clear','_setup','_step','_execute',\
 				'_get_instruction_info','_get_reg','_set_reg','_cp_to_ram',\
-				'_cp_from_ram','_reset']"
+				'_cp_from_ram','_reset']" -sFORCE_FILESYSTEM=1 -lidbfs.js
 	TARGET = wasm/$(EXENAME).js
 else
 	TARGET = $(EXENAME)$(EXE)
