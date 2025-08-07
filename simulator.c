@@ -48,7 +48,8 @@ void int_controller_set(unsigned int value);
 void int_controller_clear(unsigned int value);
 
 /* Data */
-unsigned char g_ram[RAM_SIZE]; /* RAM */
+unsigned char* g_ram; /* RAM */
+size_t g_ram_size = 0;
 unsigned int g_int_controller_pending = 0; /* List of pending interrupts */
 unsigned int g_int_controller_highest_int = 0; /* Highest pending */
 
@@ -79,21 +80,21 @@ void exit_error(char* fmt, ...)
 /* All memory reads */
 unsigned int cpu_read_byte(unsigned int address)
 {
-    if(address > RAM_SIZE)
+    if(address > g_ram_size)
         exit_error("Attempted to read byte from RAM address %08x", address);
     return READ_BYTE(g_ram, address);
 }
 
 unsigned int cpu_read_word(unsigned int address)
 {
-    if(address > RAM_SIZE)
+    if(address > g_ram_size)
         exit_error("Attempted to read word from RAM address %08x", address);
     return READ_WORD(g_ram, address);
 }
 
 unsigned int cpu_read_long(unsigned int address)
 {
-    if(address > RAM_SIZE)
+    if(address > g_ram_size)
         exit_error("Attempted to read long from RAM address %08x", address);
     return READ_LONG(g_ram, address);
 }
@@ -102,21 +103,21 @@ unsigned int cpu_read_long(unsigned int address)
 
 void cpu_write_byte(unsigned int address, unsigned int value)
 {
-    if(address > RAM_SIZE)
+    if(address > g_ram_size)
         exit_error("Attempted to write %02x to RAM address %08x", value&0xff, address);
     WRITE_BYTE(g_ram, address, value);
 }
 
 void cpu_write_word(unsigned int address, unsigned int value)
 {
-    if(address > RAM_SIZE)
+    if(address > g_ram_size)
         exit_error("Attempted to write %04x to RAM address %08x", value&0xffff, address);
     WRITE_WORD(g_ram, address, value);
 }
 
 void cpu_write_long(unsigned int address, unsigned int value)
 {
-    if(address > RAM_SIZE)
+    if(address > g_ram_size)
         exit_error("Attempted to write %08x to RAM address %08x", value, address);
     WRITE_LONG(g_ram, address, value);
 }
@@ -205,8 +206,16 @@ void reset()
 }
 
 EM_EXPORT
-void setup()
+void setup(unsigned char* rambuf, size_t rambuf_size)
 {
+    if (rambuf == NULL || rambuf_size == 0) {
+        fprintf(stderr, "Invalid RAM buffer or size\n");
+        return;
+    }
+
+    g_ram = rambuf;
+    g_ram_size = rambuf_size;
+
     // Initialize the CPU and RAM
     m68k_init();
     m68k_set_cpu_type(M68K_CPU_TYPE_68000);
@@ -246,7 +255,8 @@ void cp_to_ram(size_t dest, const unsigned char* src, size_t size)
         fprintf(stderr, "Invalid memory copy parameters\n");
         return;
     }
-    if ((dest + size > RAM_SIZE) || (dest < 0)) {
+    if (dest + size > RAM_SIZE)
+    {
         fprintf(stderr, "Memory copy out of bounds (dest: %lx, size: %lu))\n", dest, size);
         return;
     }
@@ -289,7 +299,7 @@ void parse_srec(const char* filename)
 #ifdef DEBUG
         printf("Processing line: %s", line);
 #endif
-        if (line[0] != 'S') continue; // Skip non-S-Record lines
+        if (line[0] != 'S') exit_error("Invalid S-Record line: %s", line);
         short record_type = line[1] - '0'; // Get record type (S0, S1, S2, etc.)
         char byte_count_char[3] = { line[2], line[3], '\0' };
         long byte_count = strtol(byte_count_char, NULL, 16); // Convert byte count from hex to int
@@ -357,7 +367,7 @@ void parse_srec(const char* filename)
                     fclose(file);
                     exit(EXIT_FAILURE);
                 }
-                /*m68k_set_reg(M68K_REG_PC, address);*/
+                m68k_set_reg(M68K_REG_PC, address);
             }
         }
         else if (record_type == 0)
@@ -374,6 +384,7 @@ void parse_srec(const char* filename)
 
     fclose(file);
 }
+
 
 void instruction_hook(unsigned int pc)
 {
@@ -395,17 +406,20 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    setup(); // Initialize the simulator
+    unsigned char ram[RAM_SIZE];
+    memset(ram, 0, RAM_SIZE);
+    setup(ram, RAM_SIZE);
 
-    parse_srec(argv[1]); // Load the S-Record file
+    parse_srec(argv[1]);
 
     m68k_pulse_reset();
 
     printf("starting sr: %016b\n", m68k_get_reg(NULL, M68K_REG_SR));
+    printf("starting pc: %04x\n", m68k_get_reg(NULL, M68K_REG_PC));
     while (1)
     {
         execute(1000); // Execute 1000 cycles
-        int_controller_set(1);
+        /*int_controller_set(1);*/
     }
 
     return EXIT_SUCCESS;
