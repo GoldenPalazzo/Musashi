@@ -34,9 +34,9 @@ ifeq ($(EMSCRIPTEN),1)
 				'_int_controller_clear','_setup','_step','_execute',\
 				'_get_instruction_info','_get_reg','_set_reg','_cp_to_ram',\
 				'_cp_from_ram','_reset']" -sFORCE_FILESYSTEM=1 -lidbfs.js
-	TARGET = wasm/$(EXENAME).js
+	TARGET = dist/wasm/$(EXENAME).js
 else
-	TARGET = $(EXENAME)$(EXE)
+	TARGET = dist/$(EXENAME)$(EXE)
 endif
 
 
@@ -50,7 +50,7 @@ clean:
 	rm -f $(DELETEFILES)
 
 $(TARGET): $(MUSASHIGENHFILES) $(.OFILES) Makefile
-	mkdir -p wasm
+	mkdir -p dist/wasm
 	$(CC) -o $@ $(.OFILES) $(LFLAGS) -lm
 
 m68kcpu.o: $(MUSASHIGENHFILES) m68kfpu.c m68kmmu.h softfloat/softfloat.c softfloat/softfloat.h
