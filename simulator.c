@@ -136,8 +136,7 @@ int cpu_irq_ack(int level)
 
     // Acknowledge the interrupt and return the vector number
     // For simplicity, we just return the level as the vector
-    g_int_controller_pending &= ~(1 << level);
-    g_int_controller_highest_int = 0; // Reset highest pending interrupt
+    int_controller_clear(level);
     return M68K_INT_ACK_AUTOVECTOR;
 }
 
