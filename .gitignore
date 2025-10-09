@@ -26,3 +26,6 @@ m68kops.?
 sim
 tags
 dist/
+
+# node
+node_modules/

@@ -24,6 +24,7 @@ LFLAGS    = $(WARNINGS)
 
 
 ifeq ($(EMSCRIPTEN),1)
+	export PATH := $(shell pwd)/node_modules/.bin:$(PATH)
 	CC = emcc
 	LFLAGS += -sEXPORTED_RUNTIME_METHODS="['ccall','cwrap','stringToUTF8',\
 				'setValue','HEAPU8','addFunction','FS']" \
